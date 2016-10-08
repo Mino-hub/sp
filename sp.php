@@ -9,12 +9,11 @@
 function img_proc($dom, $dom_elemnt){
     //img要素の取得 imgタグ書き換え用
     $all_img = $dom_elemnt->getElementsByTagName("img");
-
     for($all_img_i = 0 ; $all_img_i < $all_img->length ; $all_img_i++){
-
         $img_url             = $all_img->item($all_img_i)->getAttribute("data-original");
         $img_url_hash        = sha1($img_url);
         $img_file_name_regEx = "/[_\-\.a-zA-Z0-9]+(\.[jpegnifbm]{3,4})$/"; 
+
         preg_match($img_file_name_regEx, $img_url, $img_name_match);
 
         $all_img_array[$all_img_i]["img_url"]          = $img_url;
@@ -23,8 +22,8 @@ function img_proc($dom, $dom_elemnt){
         $all_img_array[$all_img_i]["img_replace_name"] = $img_url_hash;
         $all_img_array[$all_img_i]["img_tag"]          = $dom->saveXML($all_img->item($all_img_i));
     }
-
     return $all_img_array;
+    
 }
 
 // $url = "http://hayabusa.open2ch.net/test/read.cgi/livejupiter/1475650256";
@@ -52,7 +51,6 @@ foreach ($dl_tag as $node) {
     //     break;
     // }
 
-    
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // 必要な素材をいろいろ取得する
@@ -61,7 +59,6 @@ foreach ($dl_tag as $node) {
 
     // dt要素の特定
     $dt = $node->getElementsByTagName("dt")->item(0);
-
 
     //レス番号　属性から取得 <dt res=1>
     $res_no = $dt->getAttribute("res");
@@ -76,7 +73,6 @@ foreach ($dl_tag as $node) {
 
     //ddレス要素の特定
     $dd = $node->getElementsByTagName("dd")->item(0);
-
 
     //ユーザーID の取得
     $user_id = $dd->getAttribute("class");
@@ -130,23 +126,20 @@ foreach ($dl_tag as $node) {
 
     //divのフラグ
     if($div_class_group_tag->length !== 0){
-
-        $res[$i]["is_div_group"] = true;
+        $res[$i]["is_div_img_group"] = true;
         for($div_i = 0 ; $div_i < $div_class_group_tag->length ; $div_i++){
-
-            $img_array = img_proc($dom, $div_class_group_tag->item($div_i)); 
+            $img_array                                 = img_proc($dom, $div_class_group_tag->item($div_i)); 
+            $res_dd_div_tag_array[$div_i]["div_array"] = $dom->saveXML($div_class_group_tag->item($div_i));
             $res_dd_div_tag_array[$div_i]["img_array"] = $img_array;
         }
-
     }else{
-
-        $res[$i]["is_div_group"] = false;
+        $res[$i]["is_div_img_group"] = false;
         $res_dd_div_tag_array[] = "";
-
     }
 
-    $res[$i]["res_dd_div_tag_array"] = $res_dd_div_tag_array;
+    $res[$i]["div_img_group"] = $res_dd_div_tag_array;
     unset($res_dd_div_tag_array);
+    unset($img_array);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -161,7 +154,6 @@ foreach ($dl_tag as $node) {
     //aタグがあるかどうか？
     if($a->length !== 0){//<--a
         for($a_i = 0 ; $a_i < $a->length ; $a_i++){
-
             //aタグのhrefを取得
             $a_href = $a->item($a_i)->getAttribute("href");
 
@@ -173,47 +165,33 @@ foreach ($dl_tag as $node) {
 
             //アンカのフラグ
             if($is_anker === 1){//<--anker
-
                 $res_dd_a_tag_array[$a_i]["is_anker"]            = true;
                 $res_dd_a_tag_array[$a_i]["is_img"]              = false; 
                 $res_dd_a_tag_array[$a_i]["a_tag_href"]          = $a_href;
                 $res_dd_a_tag_array[$a_i]["a_tag_href_anker_no"] = $a_href_anker_no[1];
                 $res_dd_a_tag_array[$a_i]["a_tag"]               = $dom->saveXML($a->item($a_i));
-
             }else{//anker
-
                 //imgタグをもっているかどうか?
                 $img = $a->item($a_i)->getElementsByTagName("img");
-
+                $img = img_proc($a->item($a_i));
                 if($img->length !== 0){//<--img
-
                     for($img_i = 0 ; $img_i < $img->length ; $img_i++){
-
                         $img_data_original[] = $img->item($img_i)->getAttribute("data-original");
-
                     }
-
                     $res_dd_a_tag_array[$a_i]["is_img"]                  = true; 
                     $res_dd_a_tag_array[$a_i]["a_tag_img_data_original"] = $img_data_original;
                     unset($img_data_original);
-
                 }else{//img
-
                     $res_dd_a_tag_array[$a_i]["is_img"]                  = false; 
                     $res_dd_a_tag_array[$a_i]["a_tag_img_data_original"] = "";
-
-                }
-                //img-->
-                
+                } //img-->
                 //アンカーなかったっす
                 $res_dd_a_tag_array[$a_i]["is_anker"] = false;
             }//anker-->
         }
         //ddタグの中にaタグが存在するフラグ
         $res[$i]["is_a_tag"] = true;
-
     }else{//a
-
         $res_dd_a_tag_array[] = "";
 
         //ddタグの中にaタグが存在しないフラグ
@@ -267,7 +245,6 @@ foreach ($dl_tag as $node) {
 
     // $res[$i]["row_res_text"] = $row_res_text;
     $res[$i]["res_text"]     = $res_text;
-
 
     //使った作業用配列を初期化する しないと際限なく大きくなるよ
     unset($res_dd_a_tag_array);
