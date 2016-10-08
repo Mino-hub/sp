@@ -23,7 +23,14 @@ function img_proc($dom, $dom_elemnt){
         $all_img_array[$all_img_i]["img_tag"]          = $dom->saveXML($all_img->item($all_img_i));
     }
     return $all_img_array;
-    
+}
+
+function regEx_replacer($replacer, $regEx_source, $replacement){
+    $replace_regEx = preg_quote($regEx_source);
+    $replace_regEx = preg_replace("/\//", "\/", $replace_regEx); 
+    $replace_regEx = "/" . $replace_regEx . "/";
+    $replaced = preg_replace($replace_regEx, $replacer, $replacement); 
+    return $replaced;
 }
 
 // $url = "http://hayabusa.open2ch.net/test/read.cgi/livejupiter/1475650256";
@@ -74,12 +81,6 @@ foreach ($dl_tag as $node) {
     //ddレス要素の特定
     $dd = $node->getElementsByTagName("dd")->item(0);
 
-    //ユーザーID の取得
-    $user_id = $dd->getAttribute("class");
-    $user_id_replace_regEx1 = "/^id/";// "idAAA" or "idAAA mesg"
-    $user_id_replace_regEx2 = "/\smesg/";
-    $user_id = preg_replace($user_id_replace_regEx1, "", $user_id);
-
     //レス番号　属性から取得 <dt res=1>
     $res_no = $dt->getAttribute("res");
     $res[$i]["res_no"] = $res_no;
@@ -128,16 +129,16 @@ foreach ($dl_tag as $node) {
     if($div_class_group_tag->length !== 0){
         $res[$i]["is_div_img_group"] = true;
         for($div_i = 0 ; $div_i < $div_class_group_tag->length ; $div_i++){
-            $img_array                                 = img_proc($dom, $div_class_group_tag->item($div_i)); 
             $res_dd_div_tag_array[$div_i]["div_array"] = $dom->saveXML($div_class_group_tag->item($div_i));
-            $res_dd_div_tag_array[$div_i]["img_array"] = $img_array;
+            $res_dd_div_tag_array[$div_i]["img_array"] = img_proc($dom, $div_class_group_tag->item($div_i));
         }
     }else{
         $res[$i]["is_div_img_group"] = false;
-        $res_dd_div_tag_array[] = "";
+        $res_dd_div_tag_array[]      = "";
     }
 
     $res[$i]["div_img_group"] = $res_dd_div_tag_array;
+    //使った作業用配列を初期化する しないと際限なく大きくなるよ
     unset($res_dd_div_tag_array);
     unset($img_array);
 
@@ -177,9 +178,11 @@ foreach ($dl_tag as $node) {
                     $img_array = img_proc($dom, $a->item($a_i));
                     $res_dd_a_tag_array[$a_i]["is_img"]    = true; 
                     $res_dd_a_tag_array[$a_i]["img_array"] = $img_array;
+                    $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
                 }else{//img
                     $res_dd_a_tag_array[$a_i]["is_img"]    = false; 
                     $res_dd_a_tag_array[$a_i]["img_array"] = "";
+                    $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
                 } //img-->
                 //アンカーなかったっす
                 $res_dd_a_tag_array[$a_i]["is_anker"] = false;
@@ -194,7 +197,9 @@ foreach ($dl_tag as $node) {
         $res[$i]["is_a_tag"] = false;
     }//a-->
 
-    $res[$i]["a_tag"] = $res_dd_a_tag_array;
+    $res[$i]["a_tag_array"] = $res_dd_a_tag_array;
+    //使った作業用配列を初期化する しないと際限なく大きくなるよ
+    unset($res_dd_a_tag_array);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -213,8 +218,26 @@ foreach ($dl_tag as $node) {
     $row_res_text = $res_text;
 
     //アンカーリンクの書き換え href='#100'形式
-    //レスブロックにレスナンバーのidが必要になる
+    //html作成時にレスブロックにレスナンバーのidが必要になる
     if($res[$i]["is_a_tag"] === true){
+        foreach ($res[$i]["a_tag"] as $item) {
+            if($item["is_anker"] === true){
+                $a_tag_href_anker_replacer = "#" . $item["a_tag_href_anker_no"]; 
+                $a_tag_href_anker_replace_regEx = preg_quote($item["a_tag_href"]);
+                $a_tag_href_anker_replace_regEx = preg_replace("/\//", "\/", $a_tag_href_anker_replace_regEx); 
+                $a_tag_href_anker_replace_regEx = "/" . $a_tag_href_anker_replace_regEx . "/";
+                $res_text = preg_replace($a_tag_href_anker_replace_regEx,$a_tag_href_anker_replacer, $res_text); 
+            }else if($item["is_img"] === true){
+
+            }else if($item["is_anker"] === false && $item["is_img"] === false){
+
+            }
+        }
+    }
+
+    //todo div=class groupno
+    //div groupの書き換え
+    if($res[$i]["is_div_img_group"] === true){
         foreach ($res_dd_a_tag_array as $item) {
             if($item["is_anker"] === true){
                 $a_tag_href_anker_replacer = "#" . $item["a_tag_href_anker_no"]; 
@@ -225,8 +248,6 @@ foreach ($dl_tag as $node) {
             }
         }
     }
-
-    //todo div=class groupno
 
     $hash_text = 
         $url_hash . 
@@ -242,8 +263,6 @@ foreach ($dl_tag as $node) {
     // $res[$i]["row_res_text"] = $row_res_text;
     $res[$i]["res_text"]     = $res_text;
 
-    //使った作業用配列を初期化する しないと際限なく大きくなるよ
-    unset($res_dd_a_tag_array);
 
     $i++;
     $k++;
