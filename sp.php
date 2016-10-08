@@ -1,10 +1,8 @@
 <?php
-//todo aタグの種別選択どうする？
 //todo imgタグの取得と画像取り込みのテスト
 //todo データのシリアライズ化
-//todo アンカーリンクの処理をどうする？
-//todo divに囲まれていないa->imgの処理
-//todo img処理の関数化 aタグimg　div囲みimgごとに処理する必要がありそう
+//todo アンカーリンクの処理をどうする？->ショートコード化する？
+//todo htmlデータの構築テストを並行する必要あり
 
 function img_proc($dom, $dom_elemnt){
     //img要素の取得 imgタグ書き換え用
@@ -19,13 +17,14 @@ function img_proc($dom, $dom_elemnt){
         $all_img_array[$all_img_i]["img_url"]          = $img_url;
         $all_img_array[$all_img_i]["img_ext"]          = $img_name_match[1];
         $all_img_array[$all_img_i]["img_file_name"]    = $img_name_match[0];
-        $all_img_array[$all_img_i]["img_replace_name"] = $img_url_hash;
+        $all_img_array[$all_img_i]["img_rename"]       = $img_url_hash . $img_name_match[1];
+        $all_img_array[$all_img_i]["img_replace_hash"] = $img_url_hash;
         $all_img_array[$all_img_i]["img_tag"]          = $dom->saveXML($all_img->item($all_img_i));
     }
     return $all_img_array;
 }
 
-function regEx_replacer($replacer, $regEx_source, $replacement){
+function regEx_replacer($regEx_source, $replacer, $replacement, $for_quote, $quote){
     $replace_regEx = preg_quote($regEx_source);
     $replace_regEx = preg_replace("/\//", "\/", $replace_regEx); 
     $replace_regEx = "/" . $replace_regEx . "/";
@@ -35,7 +34,7 @@ function regEx_replacer($replacer, $regEx_source, $replacement){
 
 // $url = "http://hayabusa.open2ch.net/test/read.cgi/livejupiter/1475650256";
 $url = "http://open.open2ch.net/test/read.cgi/oekaki/1470136915/";
-$url_hash = sha1($url);
+$thread_hash = sha1($url);
 
 $html    = file_get_contents($url);
 $dom     = new DOMDocument();
@@ -75,8 +74,8 @@ foreach ($dl_tag as $node) {
     $res_header = $dt->nodeValue;
     $res_header_match_regEx = "/[0-9]+\s\xEF\xBC\x9A(\S+)\s?\xEF\xBC\x9A(20[0-9]{2}\/[0-9]{2}\/[0-9]{2}.+[0-9]{2}:[0-9]{2}:[0-9]{2})/";
     preg_match_all($res_header_match_regEx, $res_header, $match, PREG_SET_ORDER);
-    $res[$i]["res_name"] = $match[0][1];
-    $res[$i]["res_date"] = $match[0][2];
+    $res[$i]["res_user_name"] = $match[0][1];
+    $res[$i]["res_date"]      = $match[0][2];
 
     //ddレス要素の特定
     $dd = $node->getElementsByTagName("dd")->item(0);
@@ -89,8 +88,8 @@ foreach ($dl_tag as $node) {
     $res_header = $dt->nodeValue;
     $res_header_match_regEx = "/[0-9]+\s\xEF\xBC\x9A(\S+)\s?\xEF\xBC\x9A(20[0-9]{2}\/[0-9]{2}\/[0-9]{2}.+[0-9]{2}:[0-9]{2}:[0-9]{2})/";
     preg_match_all($res_header_match_regEx, $res_header, $match, PREG_SET_ORDER);
-    $res[$i]["res_name"] = $match[0][1];
-    $res[$i]["res_date"] = $match[0][2];
+    $res[$i]["res_user_name"] = $match[0][1];
+    $res[$i]["res_date"]      = $match[0][2];
 
     //ddレス要素の特定
     $dd = $node->getElementsByTagName("dd")->item(0);
@@ -115,6 +114,16 @@ foreach ($dl_tag as $node) {
     // なので処理の順番を変えてはいけない
     //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //img差し替えデータベース用のimg一覧データ
+    $dd_img = $dd->getElementsByTagName("img");
+    if($dd_img->length !== 0){
+        $res[$i]["database_img_array"] = img_proc($dom, $dd);
+        $res[$i]["data_base_is_img"]   = true;
+    }else{
+        $res[$i]["database_img_array"] = "";
+        $res[$i]["data_base_is_img"]   = false;
+    }
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -153,6 +162,7 @@ foreach ($dl_tag as $node) {
 
     //ddタグ内のaタグの処理
     //aタグがあるかどうか？
+    $res[$i]["is_anker"] = false;
     if($a->length !== 0){//<--a
         for($a_i = 0 ; $a_i < $a->length ; $a_i++){
             //aタグのhrefを取得
@@ -163,30 +173,26 @@ foreach ($dl_tag as $node) {
 
             //戻り値はアンカーかどうかの判断に使う 取得できたらアンカーであるという判断
             $is_anker = preg_match($a_href_anker_no_match_regEx, $a_href, $a_href_anker_no);
+            $img = $a->item($a_i)->getElementsByTagName("img");
 
             //アンカのフラグ
             if($is_anker === 1){//<--anker
-                $res_dd_a_tag_array[$a_i]["is_anker"]            = true;
+                $res[$i]["is_anker"]                             = true;
+                $res_dd_a_tag_array[$a_i]["is_anker"]            = true; 
                 $res_dd_a_tag_array[$a_i]["is_img"]              = false; 
                 $res_dd_a_tag_array[$a_i]["a_tag_href"]          = $a_href;
                 $res_dd_a_tag_array[$a_i]["a_tag_href_anker_no"] = $a_href_anker_no[1];
                 $res_dd_a_tag_array[$a_i]["a_tag"]               = $dom->saveXML($a->item($a_i));
-            }else{//anker
-                //imgタグをもっているかどうか?
-                $img = $a->item($a_i)->getElementsByTagName("img");
-                if($img->length !== 0){//<--img
-                    $img_array = img_proc($dom, $a->item($a_i));
-                    $res_dd_a_tag_array[$a_i]["is_img"]    = true; 
-                    $res_dd_a_tag_array[$a_i]["img_array"] = $img_array;
-                    $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
-                }else{//img
-                    $res_dd_a_tag_array[$a_i]["is_img"]    = false; 
-                    $res_dd_a_tag_array[$a_i]["img_array"] = "";
-                    $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
-                } //img-->
-                //アンカーなかったっす
-                $res_dd_a_tag_array[$a_i]["is_anker"] = false;
-            }//anker-->
+            }else if($img->length !== 0){//<--img
+                $img_array = img_proc($dom, $a->item($a_i));
+                $res_dd_a_tag_array[$a_i]["is_img"]    = true; 
+                $res_dd_a_tag_array[$a_i]["img_array"] = $img_array;
+                $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
+            }else{
+                $res_dd_a_tag_array[$a_i]["is_img"]    = false; 
+                $res_dd_a_tag_array[$a_i]["img_array"] = "";
+                $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
+            }
         }
         //ddタグの中にaタグが存在するフラグ
         $res[$i]["is_a_tag"] = true;
@@ -217,42 +223,46 @@ foreach ($dl_tag as $node) {
     //未加工の状態も一応残しておく
     $row_res_text = $res_text;
 
+    //div groupの書き換え
+    //*****************************************************************************************
+    //* aタグimgよりも先に処理しないと書き換えがうまくいかないのでaタグ処理との順番の変更はだめ
+    //*****************************************************************************************
+    if($res[$i]["is_div_img_group"] === true){
+        foreach ($res[$i]["div_img_group"] as $item) {
+            foreach ($item["img_array"] as $value) {
+                $div_replacer .= "[img_replace img_hash=\"" . $value["img_replace_hash"] . "\"]";
+            }
+            $res_text = regEx_replacer($item["div_array"], $div_replacer,  $res_text, "/\//", "\/");
+            $res_text = regEx_replacer("<br clear=\"both\"/>", "", $res_text, "/\//", "\/");
+            unset($div_replacer);
+        }
+    }
+
     //アンカーリンクの書き換え href='#100'形式
     //html作成時にレスブロックにレスナンバーのidが必要になる
     if($res[$i]["is_a_tag"] === true){
-        foreach ($res[$i]["a_tag"] as $item) {
+        foreach ($res[$i]["a_tag_array"] as $item) {
             if($item["is_anker"] === true){
-                $a_tag_href_anker_replacer = "#" . $item["a_tag_href_anker_no"]; 
-                $a_tag_href_anker_replace_regEx = preg_quote($item["a_tag_href"]);
-                $a_tag_href_anker_replace_regEx = preg_replace("/\//", "\/", $a_tag_href_anker_replace_regEx); 
-                $a_tag_href_anker_replace_regEx = "/" . $a_tag_href_anker_replace_regEx . "/";
-                $res_text = preg_replace($a_tag_href_anker_replace_regEx,$a_tag_href_anker_replacer, $res_text); 
+                $anker_replacer = "#" . $item["a_tag_href_anker_no"]; 
+                $res_text       = regEx_replacer($item["a_tag_href"], $anker_replacer,  $res_text, "/\//", "\/");
             }else if($item["is_img"] === true){
-
+                foreach ($item["img_array"] as $value) {
+                    $a_replacer .= "[img_replace img_hash=\"" . $value["img_replace_hash"] . "\"]";
+                }
+                $res_text = regEx_replacer($item["a_tag"], $a_replacer,  $res_text, "/\//", "\/");
+                unset($anker_replacer);
+                // $res_text = regEx_replacer("<br clear=\"both\"/>", "", $res_text, "/\//", "\/");
             }else if($item["is_anker"] === false && $item["is_img"] === false){
 
             }
         }
     }
 
-    //todo div=class groupno
-    //div groupの書き換え
-    if($res[$i]["is_div_img_group"] === true){
-        foreach ($res_dd_a_tag_array as $item) {
-            if($item["is_anker"] === true){
-                $a_tag_href_anker_replacer = "#" . $item["a_tag_href_anker_no"]; 
-                $a_tag_href_anker_replace_regEx = preg_quote($item["a_tag_href"]);
-                $a_tag_href_anker_replace_regEx = preg_replace("/\//", "\/", $a_tag_href_anker_replace_regEx); 
-                $a_tag_href_anker_replace_regEx = "/" . $a_tag_href_anker_replace_regEx . "/";
-                $res_text = preg_replace($a_tag_href_anker_replace_regEx,$a_tag_href_anker_replacer, $res_text); 
-            }
-        }
-    }
-
+    //レスのハッシュ
     $hash_text = 
         $url_hash . 
         $res[$i]["res_no"] . 
-        $res[$i]["res_data"] . 
+        $res[$i]["res_date"] . 
         $res[$i]["res_user_name"] . 
         $res[$i]["res_user_id"] . 
         $res[$i]["row_res_text"];
@@ -260,11 +270,24 @@ foreach ($dl_tag as $node) {
     $res_hash = sha1($hash_text);
     $res[$i]["res_hash"]     = $res_hash;
 
-    // $res[$i]["row_res_text"] = $row_res_text;
+    $res[$i]["row_res_text"] = $row_res_text;
     $res[$i]["res_text"]     = $res_text;
 
+    //データベースにインサートする用のデータ
+    $database_array[$i]["thread_hash"]   = $thread_hash;
+    $database_array[$i]["res_hash"]      = $res[$i]["res_hash"];
+    $database_array[$i]["res_no"]        = $res[$i]["res_no"];
+    $database_array[$i]["res_user_name"] = $res[$i]["res_user_name"];
+    $database_array[$i]["res_date"]      = $res[$i]["res_date"];
+    $database_array[$i]["res_user_id"]   = $res[$i]["res_user_id"];
+    $database_array[$i]["res_text"]      = $res[$i]["res_text"];
+    $database_array[$i]["is_img"]        = $res[$i]["data_base_is_img"];
+    $database_array[$i]["img_array"]     = $res[$i]["database_img_array"];
+    $database_array[$i]["is_anker"]      = $res[$i]["is_anker"];
+    $database_array[$i]["anker_array"]   = $res[$i]["a_tag_array"];
 
     $i++;
     $k++;
 }
-    var_dump($res);
+    var_dump($database_array);
+    // var_dump($res);
