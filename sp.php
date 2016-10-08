@@ -6,6 +6,27 @@
 //todo divに囲まれていないa->imgの処理
 //todo img処理の関数化 aタグimg　div囲みimgごとに処理する必要がありそう
 
+function img_proc($dom, $dom_elemnt){
+    //img要素の取得 imgタグ書き換え用
+    $all_img = $dom_elemnt->getElementsByTagName("img");
+
+    for($all_img_i = 0 ; $all_img_i < $all_img->length ; $all_img_i++){
+
+        $img_url             = $all_img->item($all_img_i)->getAttribute("data-original");
+        $img_url_hash        = sha1($img_url);
+        $img_file_name_regEx = "/[_\-\.a-zA-Z0-9]+(\.[jpegnifbm]{3,4})$/"; 
+        preg_match($img_file_name_regEx, $img_url, $img_name_match);
+
+        $all_img_array[$all_img_i]["img_url"]          = $img_url;
+        $all_img_array[$all_img_i]["img_ext"]          = $img_name_match[1];
+        $all_img_array[$all_img_i]["img_file_name"]    = $img_name_match[0];
+        $all_img_array[$all_img_i]["img_replace_name"] = $img_url_hash;
+        $all_img_array[$all_img_i]["img_tag"]          = $dom->saveXML($all_img->item($all_img_i));
+    }
+
+    return $all_img_array;
+}
+
 // $url = "http://hayabusa.open2ch.net/test/read.cgi/livejupiter/1475650256";
 $url = "http://open.open2ch.net/test/read.cgi/oekaki/1470136915/";
 $url_hash = sha1($url);
@@ -98,25 +119,6 @@ foreach ($dl_tag as $node) {
     //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
-    //img要素の取得 imgタグ書き換え用
-    $all_img = $dd->getElementsByTagName("img");
-
-    for($all_img_i = 0 ; $all_img_i < $all_img->length ; $all_img_i++){
-
-        $img_url             = $all_img->item($all_img_i)->getAttribute("data-original");
-        $img_url_hash        = sha1($img_url);
-        $img_file_name_regEx = "/[_\-\.a-zA-Z0-9]+(\.[jpegnifbm]{3,4})$/"; 
-        preg_match($img_file_name_regEx, $img_url, $img_name_match);
-
-        $all_img_array[$all_img_i]["img_url"]          = $img_url;
-        $all_img_array[$all_img_i]["img_ext"]          = $img_name_match[1];
-        $all_img_array[$all_img_i]["img_file_name"]    = $img_name_match[0];
-        $all_img_array[$all_img_i]["img_replace_name"] = $img_url_hash;
-    }
-
-    $res[$i]["all_img"] = $all_img_array;
-    unset($all_img_array);
-
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // divタグのしょり imgを囲っているdivタグの書き換え準備が主
@@ -132,17 +134,8 @@ foreach ($dl_tag as $node) {
         $res[$i]["is_div_group"] = true;
         for($div_i = 0 ; $div_i < $div_class_group_tag->length ; $div_i++){
 
-            $img = $div_class_group_tag->item($div_i)->getElementsByTagName("img"); 
-
-            for($img_i = 0 ; $img_i < $img->length ; $img_i++) {
-
-                $img_array[] = $img->item($img_i)->getAttribute("data-original");
-
-            }
-
+            $img_array = img_proc($dom, $div_class_group_tag->item($div_i)); 
             $res_dd_div_tag_array[$div_i]["img_array"] = $img_array;
-            $res_dd_div_tag_array[$div_i]["div_tag"] = $dom->saveXML($div_class_group_tag->item($div_i));
-            unset($img_array);
         }
 
     }else{
@@ -152,7 +145,7 @@ foreach ($dl_tag as $node) {
 
     }
 
-    // $res[$i]["res_dd_div_tag_array"] = $res_dd_div_tag_array;
+    $res[$i]["res_dd_div_tag_array"] = $res_dd_div_tag_array;
     unset($res_dd_div_tag_array);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
