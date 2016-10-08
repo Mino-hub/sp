@@ -173,17 +173,13 @@ foreach ($dl_tag as $node) {
             }else{//anker
                 //imgタグをもっているかどうか?
                 $img = $a->item($a_i)->getElementsByTagName("img");
-                $img = img_proc($a->item($a_i));
                 if($img->length !== 0){//<--img
-                    for($img_i = 0 ; $img_i < $img->length ; $img_i++){
-                        $img_data_original[] = $img->item($img_i)->getAttribute("data-original");
-                    }
-                    $res_dd_a_tag_array[$a_i]["is_img"]                  = true; 
-                    $res_dd_a_tag_array[$a_i]["a_tag_img_data_original"] = $img_data_original;
-                    unset($img_data_original);
+                    $img_array = img_proc($dom, $a->item($a_i));
+                    $res_dd_a_tag_array[$a_i]["is_img"]    = true; 
+                    $res_dd_a_tag_array[$a_i]["img_array"] = $img_array;
                 }else{//img
-                    $res_dd_a_tag_array[$a_i]["is_img"]                  = false; 
-                    $res_dd_a_tag_array[$a_i]["a_tag_img_data_original"] = "";
+                    $res_dd_a_tag_array[$a_i]["is_img"]    = false; 
+                    $res_dd_a_tag_array[$a_i]["img_array"] = "";
                 } //img-->
                 //アンカーなかったっす
                 $res_dd_a_tag_array[$a_i]["is_anker"] = false;
@@ -198,7 +194,7 @@ foreach ($dl_tag as $node) {
         $res[$i]["is_a_tag"] = false;
     }//a-->
 
-    // $res[$i]["res_dd_a_tag_array"] = $res_dd_a_tag_array;
+    $res[$i]["a_tag"] = $res_dd_a_tag_array;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
