@@ -3,47 +3,69 @@ $sourse[0]["sourse"]   = "http://i.imgur.com/4L2rYZv.jpg";
 $sourse[0]["filename"] = "0009900decca20c822900acdeffea730";
 $sourse[1]["sourse"]   = "http://i.imgur.com/9KySaHr.jpg";
 $sourse[1]["filename"] = "111dbc9dddda20c822900acdeffea730";
-// $savepath = "";
-var_dump($sourse);
+$savepath = "";
 $limit_size = 800;
 
 foreach ($sourse as $value) {
-    $image = new Imagick($value["sourse"]);
-    scale_to_write($image, $value["filename"], $limit_size);
+    $image = new ImageScaleProc($value["sourse"], $value["filename"], $limit_size, $savepath);
+    unset($image);
 }
 
-function scale_to_write($image, $savepath, $limit_size){
-    $image_info = $image->identifyImage();
-    // var_dump($image_info);
-    if      ($image_info["mimetype"] === "image/jpeg"){
-        $ext = "jpg";
-        $cq = $image->getImageCompressionQuality();
+class ImageScaleProc{
+    private $sourse;
+    private $filename;
+    private $image;
+    private $image_info;
+    private $limit_size;
+    private $ext;
+    public function __construct($sourse, $filename, $limit_size, $savepath)
+    {
+        $this->sourse     = $sourse;
+        $this->filename   = $filename;
+        $this->savepath   = $savepath;
+        $this->image      = new Imagick($this->sourse);
+        $this->image_info = $this->image->identifyImage();
+        $this->limit_size = $limit_size;
+        $this->extOutput();
+        $this->compressQy();
+        // $this->scaleProc();
+        // $this->saveImage();
+    }
+    private function extOutput(){
+        if($this->image_info["mimetype"] === "image/jpeg"){
+            $this->ext = "jpg";
+        }else if($this->image_info["mimetype"] === "image/png"){
+            $this->ext = "png";
+        }else if($this->image_info["mimetype"] === "image/gif"){
+            $this->ext = "gif";
+        }else if($this->image_info["mimetype"] === "image/bmp"){
+            $this->ext = "bmp";
+        }
+    }
+    private function compressQy(){
+        $cq = $this->image->getImageCompressionQuality();
         if($cq > 40){
-            $image->setImageCompressionQuality(40);
+            $this->image->setImageCompressionQuality(40);
         }else{
-            $image->setImageCompressionQuality($cq);
+            $this->image->setImageCompressionQuality($cq);
         }
-
-    }else if($image_info["mimetype"] === "image/png"){
-        $ext = "png";
-    }else if($image_info["mimetype"] === "image/gif"){
-        $ext = "gif";
-    }else if($image_info["mimetype"] === "image/bmp"){
-        $ext = "bmp";
     }
-
-    if($image_info["geometry"]["width"] > $limit_size && $image_info["geometry"]["height"] > $limit_size){
-        if($image_info["geometry"]["width"] > $image_info["geometry"]["height"]){
-            $image->scaleImage($limit_size, 0);
-        }else if($image_info["geometry"]["height"] > $image_info["geometry"]["width"]){
-            $image->scaleImage(0, $limit_size);
-        }else if($image_info["geometry"]["width"] === $image_info["geometry"]["height"]){
-            $image->scaleImage($limit_size, $limit_size);
+    private function scaleProc(){
+        if($this->image_info["geometry"]["width"] > $this->limit_size && $this->image_info["geometry"]["height"] > $this->limit_size){
+            if($this->image_info["geometry"]["width"] > $this->image_info["geometry"]["height"]){
+                $image->scaleImage($this->limit_size, 0);
+            }else if($this->image_info["geometry"]["height"] > $this->image_info["geometry"]["width"]){
+                $this->image->scaleImage(0, $this->limit_size);
+            }else if($this->image_info["geometry"]["width"] === $this->image_info["geometry"]["height"]){
+                $this->image->scaleImage($this->limit_size, $this->limit_size);
+            }
+        }else if($this->image_info["geometry"]["width"] > $this->limit_size && $this->image_info["geometry"]["height"] < $this->limit_size){
+            $this->image->scaleImage($this->limit_size, 0);
+        }else if($this->image_info["geometry"]["height"] > $this->limit_size && $this->image_info["geometry"]["width"] < $this->limit_size){
+                $this->image->scaleImage(0, $this->limit_size);
         }
-    }else if($image_info["geometry"]["width"] > $limit_size && $image_info["geometry"]["height"] < $limit_size){
-        $image->scaleImage($limit_size, 0);
-    }else if($image_info["geometry"]["height"] > $limit_size && $image_info["geometry"]["width"] < $limit_size){
-            $image->scaleImage(0, $limit_size);
     }
-$image->writeImage($savepath . "." . $ext);
+    private function saveImage(){
+        $this->image->writeImage($this->filename . "." . $this->ext);
+    }
 }
