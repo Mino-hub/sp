@@ -4,11 +4,12 @@
 //todo アンカーリンクの処理をどうする？->ショートコード化する？
 //todo htmlデータの構築テストを並行する必要あり
 
-function img_proc($dom, $dom_elemnt){
+function img_proc($dom, $dom_elemnt, $p){
     //img要素の取得 imgタグ書き換え用
-    $all_img = $dom_elemnt->getElementsByTagName("img");
+    //タグ取得がimgではなくaなのは、imgではサムネイルを取得してしまうため
+    $all_img = $dom_elemnt->getElementsByTagName("a");
     for($all_img_i = 0 ; $all_img_i < $all_img->length ; $all_img_i++){
-        $img_url             = $all_img->item($all_img_i)->getAttribute("data-original");
+        $img_url             = $all_img->item($all_img_i)->getAttribute("href");
         $img_url_hash        = sha1($img_url);
         $img_file_name_regEx = "/[_\-\.a-zA-Z0-9]+(\.[jpegnifbm]{3,4})$/"; 
 
@@ -21,7 +22,26 @@ function img_proc($dom, $dom_elemnt){
         $all_img_array[$all_img_i]["img_replace_hash"] = $img_url_hash;
         $all_img_array[$all_img_i]["img_tag"]          = $dom->saveXML($all_img->item($all_img_i));
     }
+    // var_dump($all_img_array);
     return $all_img_array;
+}
+function img_proc_a($dom, $dom_elemnt){
+    //img要素の取得 imgタグ書き換え用
+    //タグ取得がimgではなくaなのは、imgではサムネイルを取得してしまうため
+    $img_a                 = $dom_elemnt;
+    $img_a_url             = $img_a->getAttribute("href");
+    $img_a_url_hash        = sha1($img_a_url);
+    $img_a_file_name_regEx = "/[_\-\.a-zA-Z0-9]+(\.[jpegnifbm]{3,4})$/"; 
+
+    preg_match($img_a_file_name_regEx, $img_a_url, $img_a_name_match);
+
+    $img_a_tag[0]["img_url"]          = $img_a_url;
+    $img_a_tag[0]["img_ext"]          = $img_a_name_match[1];
+    $img_a_tag[0]["img_file_name"]    = $img_a_name_match[0];
+    $img_a_tag[0]["img_rename"]       = $img_a_url_hash . $img_a_name_match[1];
+    $img_a_tag[0]["img_replace_hash"] = $img_a_url_hash;
+    $img_a_tag[0]["img_tag"]          = $dom->saveXML($img_a);
+    return $img_a_tag;
 }
 
 function regEx_replacer($regEx_source, $replacer, $replacement, $for_quote, $quote){
@@ -33,7 +53,9 @@ function regEx_replacer($regEx_source, $replacer, $replacement, $for_quote, $quo
 }
 
 // $url = "http://hayabusa.open2ch.net/test/read.cgi/livejupiter/1475650256";
-$url = "http://open.open2ch.net/test/read.cgi/oekaki/1470136915/";
+// $url = "http://open.open2ch.net/test/read.cgi/oekaki/1470136915/";
+// $url = "http://hayabusa.open2ch.net/test/read.cgi/livejupiter/1477241379/";
+$url = "http://hayabusa.open2ch.net/test/read.cgi/livejupiter/1474364007/";
 $thread_hash = sha1($url);
 
 $html    = file_get_contents($url);
@@ -53,9 +75,10 @@ $dl_tag             = $xpath->query("dl" , $context);
 $res[] = [];
 $i = 1;
 foreach ($dl_tag as $node) {
-    // if($i>4){
-    //     break;
-    // }
+    var_dump($i."レス目");
+    if($i>4){
+        break;
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -116,15 +139,23 @@ foreach ($dl_tag as $node) {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //img差し替えデータベース用のimg一覧データ
-    $dd_img = $dd->getElementsByTagName("img");
-    if($dd_img->length !== 0){
-        $res[$i]["database_img_array"] = img_proc($dom, $dd);
-        $res[$i]["data_base_is_img"]   = true;
+    $dd_a = $dd->getElementsByTagName("a");
+    if($dd_a->length !== 0){
+        foreach ($dd_a as $value) {
+            $is_img = $value->getElementsByTagName("img")->length;
+            if($is_img !== 0){
+                $res[$i]["database_img_array"] = img_proc($dom, $dd, "差し替え用");
+                $res[$i]["data_base_is_img"]   = true;
+            }else{
+                $res[$i]["database_img_array"] = "";
+                $res[$i]["data_base_is_img"]   = false;
+            }
+        }
     }else{
         $res[$i]["database_img_array"] = "";
         $res[$i]["data_base_is_img"]   = false;
     }
-    
+   
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // divタグのしょり imgを囲っているdivタグの書き換え準備が主
@@ -139,7 +170,7 @@ foreach ($dl_tag as $node) {
         $res[$i]["is_div_img_group"] = true;
         for($div_i = 0 ; $div_i < $div_class_group_tag->length ; $div_i++){
             $res_dd_div_tag_array[$div_i]["div_array"] = $dom->saveXML($div_class_group_tag->item($div_i));
-            $res_dd_div_tag_array[$div_i]["img_array"] = img_proc($dom, $div_class_group_tag->item($div_i));
+            $res_dd_div_tag_array[$div_i]["img_array"] = img_proc($dom, $div_class_group_tag->item($div_i), "divフラグ");
         }
     }else{
         $res[$i]["is_div_img_group"] = false;
@@ -183,15 +214,25 @@ foreach ($dl_tag as $node) {
                 $res_dd_a_tag_array[$a_i]["a_tag_href"]          = $a_href;
                 $res_dd_a_tag_array[$a_i]["a_tag_href_anker_no"] = $a_href_anker_no[1];
                 $res_dd_a_tag_array[$a_i]["a_tag"]               = $dom->saveXML($a->item($a_i));
-            }else if($img->length !== 0){//<--img
-                $img_array = img_proc($dom, $a->item($a_i));
+            }else if($img->length !== 0 && $is_anker === 0){//<--img
+                $res[$i]["is_anker"]                   = false;
+                $res_dd_a_tag_array[$a_i]["is_anker"]  = false; 
+                $img_array = img_proc_a($dom, $a->item($a_i), "安価");
                 $res_dd_a_tag_array[$a_i]["is_img"]    = true; 
                 $res_dd_a_tag_array[$a_i]["img_array"] = $img_array;
                 $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
-            }else{
+            }else if($img->length === 0 && $is_anker === 0){
+                $res[$i]["is_anker"]                   = false;
+                $res_dd_a_tag_array[$a_i]["is_anker"]  = false; 
                 $res_dd_a_tag_array[$a_i]["is_img"]    = false; 
                 $res_dd_a_tag_array[$a_i]["img_array"] = "";
                 $res_dd_a_tag_array[$a_i]["a_tag"]     = $dom->saveXML($a->item($a_i));
+            }else{
+                $res[$i]["is_anker"]                   = false;
+                $res_dd_a_tag_array[$a_i]["is_anker"]  = false; 
+                $res_dd_a_tag_array[$a_i]["is_img"]    = false; 
+                $res_dd_a_tag_array[$a_i]["img_array"] = [];
+                $res_dd_a_tag_array[$a_i]["a_tag"]     = "";
             }
         }
         //ddタグの中にaタグが存在するフラグ
@@ -227,6 +268,7 @@ foreach ($dl_tag as $node) {
     //*****************************************************************************************
     //* aタグimgよりも先に処理しないと書き換えがうまくいかないのでaタグ処理との順番の変更はだめ
     //*****************************************************************************************
+    //
     if($res[$i]["is_div_img_group"] === true){
         foreach ($res[$i]["div_img_group"] as $item) {
             foreach ($item["img_array"] as $value) {
@@ -258,9 +300,12 @@ foreach ($dl_tag as $node) {
         }
     }
 
+    $res[$i]["row_res_text"] = $row_res_text;
+    $res[$i]["res_text"]     = $res_text;
+
     //レスのハッシュ
     $hash_text = 
-        $url_hash . 
+        $url . 
         $res[$i]["res_no"] . 
         $res[$i]["res_date"] . 
         $res[$i]["res_user_name"] . 
@@ -270,8 +315,6 @@ foreach ($dl_tag as $node) {
     $res_hash = sha1($hash_text);
     $res[$i]["res_hash"]     = $res_hash;
 
-    $res[$i]["row_res_text"] = $row_res_text;
-    $res[$i]["res_text"]     = $res_text;
 
     //データベースにインサートする用のデータ
     $database_array[$i]["thread_hash"]   = $thread_hash;
@@ -290,4 +333,3 @@ foreach ($dl_tag as $node) {
     $k++;
 }
     var_dump($database_array);
-    // var_dump($res);
