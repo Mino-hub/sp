@@ -6,7 +6,7 @@ curl_setopt($context, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($context, CURLOPT_PROXYPORT, 9050);//アクセスポート
 curl_setopt($context, CURLOPT_PROXY, "localhost");//IPアドレスかURL
 $html = curl_exec($context);
-curl_close($context);
 $info = curl_getinfo($context);
+curl_close($context);
 var_dump($info);
 // var_dump($html);
