@@ -9,4 +9,4 @@ $html = curl_exec($context);
 $info = curl_getinfo($context);
 curl_close($context);
 var_dump($info);
-// var_dump($html);
+var_dump($html);
