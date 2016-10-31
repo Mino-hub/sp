@@ -30,7 +30,7 @@ foreach ($a as $item) {
 }
 var_dump($menu);
 
-$pdo = new PDO("mysql:host=172.17.0.4;dbname=spdb;charset=utf8","root","goma");
+$pdo = new PDO("mysql:host=172.20.0.10;dbname=spdb;charset=utf8","root","goma");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 $i = 0;
 foreach ($menu as $value) {
