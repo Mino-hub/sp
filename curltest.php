@@ -22,7 +22,7 @@
 // var_dump($info);
 
 $context = curl_init();
-curl_setopt($context, CURLOPT_URL, "172.20.0.31:9050");
+curl_setopt($context, CURLOPT_URL, "socks5://172.20.0.31:9050");
 $html = curl_exec($context);
 $info = curl_getinfo($context);
 curl_close($context);
