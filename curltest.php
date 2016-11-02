@@ -14,5 +14,5 @@ curl_setopt($context, CURLINFO_HEADER_OUT,true);
 $html = curl_exec($context);
 $info = curl_getinfo($context, CURLINFO_HEADER_OUT);
 curl_close($context);
-// var_dump($info);
+var_dump($info);
 // var_dump($html);
