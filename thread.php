@@ -1,5 +1,13 @@
 <?php 
 
+function curl_tor($url){
+    $curl  = "curl -s -c ";
+    $proxy = "--socks5 172.20.0.31:9050 ";
+    $context = $curl.$proxy.$url;
+    $exec = shell_exec($context);
+    return $exec;
+}
+
 $pdo = new PDO("mysql:host=172.20.0.10;dbname=spdb;charset=utf8","root","goma");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 $reslut = $pdo->query("SELECT * from menu");
@@ -28,7 +36,8 @@ foreach ($menu as $main_value) {
     var_dump($subdomein);
     $thread_url  = $main_value["url"] . "subback.html";
     $thread_hash = sha1($main_value["url"]);
-    $thread_html = file_get_contents($thread_url);
+    // $thread_html = file_get_contents($thread_url);
+    $thread_html = curl_tor($thread_url);
 
     //domobjの作成取得
     $thread_dom   = new DOMDocument();
