@@ -11,7 +11,6 @@ curl_setopt($context, CURLOPT_PROXY, '172.20.0.31:9050');
 curl_setopt($context, CURLOPT_COOKIEJAR, 'cookie_menu');
 curl_setopt($context, CURLINFO_HEADER_OUT,true);
 $html = curl_exec($context);
-$info = curl_getinfo($context, CURLINFO_HEADER_OUT);
+$info = curl_getinfo($context);
 curl_close($context);
 var_dump($info);
-// var_dump($html);
