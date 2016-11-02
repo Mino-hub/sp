@@ -21,7 +21,8 @@ $url = "http://hayabusa.open2ch.net/livejupiter/";
 // curl_close($context);
 // var_dump($info);
 
-$exec = shell_exec("curl -csL --socks5 172.20.0.31:9050 http://hayabusa.open2ch.net/livejupiter/");
+$exec = shell_exec("curl -c --socks5 172.20.0.31:9050 http://hayabusa.open2ch.net/livejupiter/");
+$exec2 = shell_exec("curl -c --socks5 172.20.0.31:9050 ipinfo.io");
 var_dump($exec);
-var_dump($output);
+var_dump($exec2);
 
