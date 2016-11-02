@@ -38,6 +38,7 @@ foreach ($menu as $main_value) {
     $thread_hash = sha1($main_value["url"]);
     // $thread_html = file_get_contents($thread_url);
     $thread_html = curl_tor($thread_url);
+    var_dump($thread_html);
 
     //domobjの作成取得
     $thread_dom   = new DOMDocument();
