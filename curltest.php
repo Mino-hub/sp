@@ -1,7 +1,7 @@
 <?php
 $url = "http://hayabusa.open2ch.net/livejupiter/";
-$url = "http://104.20.36.84/livejupiter/";
-$url = "http://qiita.com/snize/items/fad7f4451d19903f8ac9";
+// $url = "http://104.20.36.84/livejupiter/";
+// $url = "http://qiita.com/snize/items/fad7f4451d19903f8ac9";
 $context = curl_init();
 curl_setopt($context, CURLOPT_URL, $url);
 curl_setopt($context, CURLOPT_RETURNTRANSFER, true);
