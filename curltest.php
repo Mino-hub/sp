@@ -5,7 +5,8 @@ $context = curl_init();
 curl_setopt($context, CURLOPT_URL, $url);
 curl_setopt($context, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($context, CURLINFO_HEADER_OUT, true);
-curl_setopt($context, CURLOPT_AUTOREFERER, true);
+curl_setopt($context, CURLOPT_VERBOSE, true);
+// curl_setopt($context, CURLOPT_AUTOREFERER, true);
 
 // curl_setopt($context, CURLOPT_HEADER, true);
 // curl_setopt($context, CURLOPT_HTTPHEADER, ["User-Agent: curl/7.38.0"]);
