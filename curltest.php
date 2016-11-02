@@ -12,7 +12,7 @@ curl_setopt($context, CURLOPT_PROXY, '172.20.0.31:9050');
 // curl_setopt($context, CURLOPT_COOKIEJAR, 'cookie_menu');
 curl_setopt($context, CURLINFO_HEADER_OUT,true);
 $html = curl_exec($context);
-$info = curl_getinfo($context, CURLINFO_HEADER_OUT,CURLINFO_RESPONSE_CODE);
+$info = curl_getinfo($context, CURLINFO_HEADER_OUT);
 curl_close($context);
 var_dump($info);
 // var_dump($html);
