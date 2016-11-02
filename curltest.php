@@ -1,5 +1,5 @@
 <?php
-$url = "http://hayabusa.open2ch.net/livejupiter/";
+// $url = "http://hayabusa.open2ch.net/livejupiter/";
 // $url = "http://qiita.com/snize/items/fad7f4451d19903f8ac9";
 // $context = curl_init();
 // curl_setopt($context, CURLOPT_URL, $url);
@@ -21,8 +21,15 @@ $url = "http://hayabusa.open2ch.net/livejupiter/";
 // curl_close($context);
 // var_dump($info);
 
-$exec = shell_exec("curl -c --socks5 172.20.0.31:9050 http://hayabusa.open2ch.net/livejupiter/");
-$exec2 = shell_exec("curl -c --socks5 172.20.0.31:9050 ipinfo.io");
-var_dump($exec);
-var_dump($exec2);
+$context = curl_init();
+curl_setopt($context, CURLOPT_URL, "172.20.0.31:9050");
+$html = curl_exec($context);
+$info = curl_getinfo($context);
+curl_close($context);
+var_dump($info);
+
+// $exec = shell_exec("curl -c --socks5 172.20.0.31:9050 http://hayabusa.open2ch.net/livejupiter/");
+// $exec2 = shell_exec("curl -c --socks5 172.20.0.31:9050 ipinfo.io");
+// var_dump($exec);
+// var_dump($exec2);
 
