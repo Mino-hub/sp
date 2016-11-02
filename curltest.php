@@ -1,6 +1,6 @@
 <?php
 // $url = "http://hayabusa.open2ch.net/livejupiter/";
-$url = "http://ipinfp.io";
+$url = "http://ipinfo.io";
 $context = curl_init();
 curl_setopt($context, CURLOPT_URL, $url);
 curl_setopt($context, CURLOPT_RETURNTRANSFER, true);
