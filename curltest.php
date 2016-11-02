@@ -8,6 +8,7 @@ curl_setopt($context, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
 curl_setopt($context, CURLOPT_PROXY, '172.20.0.31:9050');
 curl_setopt($context, CURLOPT_COOKIEFILE, 'cookie_menu');
 curl_setopt($context, CURLOPT_COOKIEJAR, 'cookie_menu');
+curl_setopt($context, CURLOPT_COOKIE, 'cookie_menu');
 $html = curl_exec($context);
 $info = curl_getinfo($context);
 curl_close($context);
