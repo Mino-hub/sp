@@ -33,7 +33,7 @@ $url = "http://hayabusa.open2ch.net/livejupiter/";
 // $exec2 = shell_exec("curl -c --socks5 172.20.0.31:9050 ipinfo.io");
 // var_dump($exec);
 // var_dump($exec2);
-$proxy = ["http"=>["proxy"=>"socks5://172.20.0.31:9050"]];
+$proxy = ["http"=>["proxy"=>"172.20.0.31:9050"]];
 $proxy_context = stream_context_create($proxy);
 
 $a = file_get_contents($url,false,$proxy_context);
