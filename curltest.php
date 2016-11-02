@@ -34,6 +34,7 @@ $url = "http://hayabusa.open2ch.net/livejupiter/";
 // var_dump($exec);
 // var_dump($exec2);
 $proxy = ["http"=>["proxy"=>"socks5://172.20.0.31:9050"]];
+$proxy_context = stream_context_create($proxy);
 
-$a = file_get_contents($url,false,$proxy);
+$a = file_get_contents($url,false,$proxy_context);
 var_dump($a);
