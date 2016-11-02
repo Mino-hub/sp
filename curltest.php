@@ -16,6 +16,6 @@ $url = "http://hayabusa.open2ch.net/livejupiter/";
 // $info = curl_getinfo($context);
 // curl_close($context);
 // var_dump($info);
-$exec = exec("curl --verbose -c --socks5 127.0.0.1:9050 http://hayabusa.open2ch.net/livejupiter/");
+$exec = exec("curl -c --socks5 127.0.0.1:9050 http://hayabusa.open2ch.net/livejupiter/");
 var_dump($exec);
 
