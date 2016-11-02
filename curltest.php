@@ -1,4 +1,5 @@
 <?php
+$fp = fopen('curl.log', 'a');
 $url = "http://hayabusa.open2ch.net/livejupiter/";
 // $url = "http://open.open2ch.net/menu/";
 $context = curl_init();
@@ -24,6 +25,7 @@ $info = curl_getinfo($context);
 curl_close($context);
 var_dump($info);
 var_dump($fp);
+fclose($fp);
 
 // $exec = exec("curl -c --socks5 127.0.0.1:9050 http://hayabusa.open2ch.net/livejupiter/",$output);
 // var_dump($exec);
