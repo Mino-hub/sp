@@ -2,7 +2,7 @@
 
 function curl_tor($url){
     $curl  = "curl -s -c ";
-    $proxy = "--socks5-hostname 172.20.0.31:9050 ";
+    $proxy = "-x 172.20.0.31:8123 ";
     $context = $curl.$proxy.$url;
     var_dump($context);
     $exec = shell_exec($context);
