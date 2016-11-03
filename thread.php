@@ -29,7 +29,7 @@ foreach ($reslut->fetchall() as $reslut_value) {
 $de = 0;
 foreach ($menu as $main_value) {
 
-    if($de > 1){
+    if($de > 0){
         break;
     }
 
