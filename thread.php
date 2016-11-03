@@ -1,10 +1,10 @@
 <?php 
 
 function curl_tor($url){
-    $curl  = "curl -s -c ";
+    $curl  = "curl --verbose -s -c ";
     $proxy = "-x 172.20.0.31:8123 ";
     $context = $curl.$proxy.$url;
-    var_dump($context);
+    // var_dump($context);
     $exec = shell_exec($context);
     return $exec;
 }
