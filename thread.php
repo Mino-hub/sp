@@ -29,12 +29,12 @@ foreach ($reslut->fetchall() as $reslut_value) {
 $de = 0;
 foreach ($menu as $main_value) {
 
-    if($de > 3){
+    if($de > 1){
         break;
     }
 
     $subdomein   = preg_replace("/\/$/", "", $main_value["url"]);
-    var_dump($subdomein);
+    // var_dump($subdomein);
     $thread_url  = $main_value["url"] . "subback.html";
     $thread_hash = sha1($main_value["url"]);
     // $thread_html = file_get_contents($thread_url);
@@ -60,7 +60,7 @@ foreach ($menu as $main_value) {
         $reurl = preg_replace("/l50$/", "", $href);
         preg_match("/[0-9]{10}/", $reurl, $mtime);
         $mtime = $mtime[0];
-        var_dump($mtime);
+        // var_dump($mtime);
         // var_dump($reurl);
 
         $thread[$t_i]["hash"]  = sha1($href); 
