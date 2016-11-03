@@ -27,6 +27,7 @@ $url = "http://hayabusa.open2ch.net/livejupiter/";
 // curl_close($context);
 // var_dump($info);
 
-$exec = shell_exec("curl -s -c -x 172.20.0.31:8123 ipinfo.io");
+// $exec = shell_exec("curl -s -c -x 172.20.0.31:8123 ipinfo.io");
+$exec = exec("curl -s -c -x 172.20.0.31:8123 ipinfo.io");
 var_dump($exec);
 // var_dump($exec2);
